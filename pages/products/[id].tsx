@@ -41,6 +41,7 @@ export async function getStaticProps({
     });
     return { props: { product } };
   } catch (error) {
+    console.log(error);
     return { props: { product: null } };
   }
 }
