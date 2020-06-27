@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import Error from 'next/error';
 import { PrismaClient, Product, Sku, Attribute, Price } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -33,21 +32,24 @@ export async function getStaticProps({
   };
 }) {
   try {
+    const id = Number(params.id);
+    if (isNaN(id)) throw new Error('Id is NaN');
     const product = await prisma.product.findOne({
-      where: { id: Number(params.id) },
+      where: { id },
       include: {
         variants: { include: { attributes: true, prices: true } },
       },
     });
     return { props: { product } };
   } catch (error) {
-    console.log(error);
-    return { props: { product: null } };
+    console.log(error.message);
+    return { props: { product: null, error: error.message } };
   }
 }
 
 export default function ProductPage({
   product,
+  error,
 }: {
   product:
     | (Product & {
@@ -57,6 +59,7 @@ export default function ProductPage({
         })[];
       })
     | null;
+  error: any;
 }) {
   const router = useRouter();
 
@@ -67,7 +70,18 @@ export default function ProductPage({
   }
 
   if (!product) {
-    return <Error statusCode={404} />;
+    return (
+      <pre>
+        {JSON.stringify(
+          {
+            product,
+            error,
+          },
+          null,
+          2
+        )}
+      </pre>
+    );
   }
 
   return (
